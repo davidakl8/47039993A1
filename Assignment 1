@@ -1,0 +1,61 @@
+import math as m
+
+# Task 1
+def determine_hub_speed(v_meas, h_meas, h_hub, alpha) :
+    """
+    Function to determine the hub speed from the speed at a lower height
+
+    Parameters:
+        v_meas (float): wind speed where measurement occurs (m/sec)
+        h_hub (float): the height of the hub (m)
+        h_meas (float): the height at which wind speed is measured (m)
+        alpha (float): the power law exponent
+
+    Returns:
+        (float): wind speed at the hub (m/sec)
+    """
+    v_hub = v_meas*(h_hub/h_meas)**alpha
+    return v_hub    
+
+
+# Task 2
+def determine_windpower(v_hub, r, rho) :
+    """
+    Function to determine the wind power (kW)
+
+    Parameters:
+        v_hub (float): wind speed at the hub (m/sec)
+        r (float): radius of the blades (m)
+        rho (float): air density (kg/m**3)
+
+    Returns:
+        (float): wind power (kW)
+    """
+    p_wind = (0.5 * rho * m.pi * (r**2) * v_hub**3)/1000 # /1000 -> convert from W to kW
+    return p_wind
+
+
+# Task 3
+'''def determine_mech_coef(v_hub, radius, omega, coeffs) :
+    lamda(radius, omega, v_hub)
+    number_of_coeffs = len(coeffs)
+    k = number_of_coeffs
+    
+    def lambda(radius, omega, v_hub):
+        lamda = radius*omega/v_hub
+    def c_p(coeffs, lamda):
+        c_p = lamda * coeffs
+    '''
+
+def sigma(function, 1, k):
+    result = 0
+    i = 1
+    for i in range(1, k+1):
+        result += function(i)
+        i += 1
+    return result
+
+    
+
+
+
