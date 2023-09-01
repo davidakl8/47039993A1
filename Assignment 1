@@ -35,7 +35,98 @@ def determine_windpower(v_hub, r, rho) :
     return p_wind
 
 
+# Task 3
+def determine_mech_coeff(v_hub, radius, omega, coeffs) :
+    """
+    Function to determine the mechanical coefficient Cp
+
+    Parameters:
+        v_hub (float): Wind speed at the hub in m/s
+        radius (float): Radius of the wind turbine blades in meters
+        omega (float): Rotation speed of the wind turbine blades in rad/sec
+        coeffs (tuple): Coefficients (a1, a2, ..., ak) for the Cp equation
+
+    Returns:
+        float: Mechanical coefficient Cp
+    """
+    lambda_ratio = radius * omega / v_hub
+    cp = sum(ai * lambda_ratio ** i for i, ai in enumerate(coeffs, start=1))
+    return cp
+
+
+# Task 4
+def determine_mech_power(v_hub, SPEEDS, radius, omega, rho, coeffs):
+    """
+    Calculate the mechanical power captured by the turbine for a given wind speed.
+
+    Args:
+        v_hub (float): Wind speed at the hub in m/s.
+        SPEEDS (tuple): Wind turbine speed parameters (v_cutin, v_cutout, v_rated).
+        radius (float): Radius of the wind turbine blades in meters.
+        omega (float): Rotation speed of the wind turbine blades in rad/sec.
+        rho (float): Air density in kg/m³.
+        coeffs (tuple): Coefficients (a1, a2, ..., ak) for the Cp equation.
+
+    Returns:
+        float: Mechanical power captured by the turbine in watts.
+    """
+    v_cutin, v_cutout, v_rated = SPEEDS
     
+    if v_hub <= v_cutin:
+        return 0.0
+    elif v_cutin < v_hub <= v_rated:
+        cp_hub = determine_mech_coeff(v_hub, radius, omega, coeffs)
+        p_mech_hub = determine_windpower(v_hub, radius, rho) * cp_hub
+        return p_mech_hub
+    elif v_rated < v_hub <= v_cutout:
+        cp_rated = determine_mech_coeff(v_rated, radius, omega, coeffs)
+        p_mech_rated = determine_windpower(v_rated, radius, rho) * cp_rated
+        return p_mech_rated
+    else:
+        return 0.0
 
+# Task 5
+def determine_revenue(SPEEDS, h_meas, h_hub, alpha, radius, omega, rho, coeffs):
+    """
+    Calculate the revenue generated and average power during a day for a wind turbine.
 
+    Args:
+        SPEEDS (tuple): Wind turbine speed parameters (v_cutin, v_cutout, v_rated).
+        h_meas (float): Measurement height in meters.
+        h_hub (float): Hub height in meters.
+        alpha (float): Wind shear exponent.
+        radius (float): Radius of the wind turbine blades in meters.
+        omega (float): Rotation speed of the wind turbine blades in rad/sec.
+        rho (float): Air density in kg/m³.
+        coeffs (tuple): Coefficients (a1, a2, ..., ak) for the Cp equation.
 
+    Returns:
+        tuple: Daily revenue and average power during the day.
+    """
+    v_cutin, v_cutout, v_rated = SPEEDS
+    hours_in_day = 23
+    power_company_rate = 0.2  # $/kWh
+
+    daily_revenue = 0.0
+    total_power = 0.0
+
+    for t in range(hours_in_day):
+        v_meas = v_rated * (1 + 0.2 * m.cos(2 * m.pi * ((t - 12) / 24)))
+        v_hub = v_meas * (h_hub / h_meas) ** alpha
+
+        if v_hub <= v_cutin or v_hub > v_cutout:
+            p_mech = 0.0
+        else:
+            p_mech = determine_mech_power(v_hub, SPEEDS, radius, omega, rho, coeffs)
+            #cp = determine_mech_coeff(v_hub, radius, omega, coeffs)
+            #p_mech = 0.5 * rho * (v_hub ** 3) * cp * (3.14159 * radius ** 2)
+            p_mech *= 0.9  # Conversion efficiency
+
+        revenue_hour = (p_mech / 1000) * power_company_rate  # Convert to kW and multiply by rate
+        daily_revenue += revenue_hour
+
+        # Update total power with the actual generated power (not accounting for efficiency)
+        total_power += p_mech / 0.9
+
+    average_power = total_power / (hours_in_day+1)
+    return daily_revenue, average_power
